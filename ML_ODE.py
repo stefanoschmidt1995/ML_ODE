@@ -23,15 +23,17 @@ class ML_ODE_Basemodel(tf.keras.Model):
 		self.epoch = 0
 		self.regularizer = 0.
 
-			#initializing ranges and checking
+			#initializing constraints and checking
 		self.set_model_properties()
-		if not isinstance(self.ranges,list):
-			raise ValueError("List ranges should be of list type with format [(min_t, max_t), (min_var1, max_var1), ..., (max_par1, max_parD)]")
-		for _range in self.ranges:
-			if not isinstance(_range,list) and not isinstance(_range,tuple):
+		if not isinstance(self.constraints,list):
+			raise ValueError("List of constraints should be of list type with format [(min_t, max_t), (min_var1, max_var1), ..., (max_par1, max_parD)]")
+		for _cons in self.constraints:
+			if not isinstance(_cons,list) and not isinstance(_cons,tuple):
 				raise ValueError("Each element in range list should be a tuple or a list")
-			if not isinstance(_range[0],float) or not isinstance(_range[1],float):
+			if not isinstance(_cons[0],float) or not isinstance(_cons[1],float):
 				raise ValueError("Limits for each variable should be a float")
+		if len(self.constraints) != 1+self.n_vars+self.n_params:
+			raise ValueError("Wrong number of constraints given. Required {} constraints for the variables but {} provided.".format(1+self.n_vars+self.n_params, len(self.constraints)))
 
 			#setting a positive regularizer (just in case)
 		self.regularizer = np.abs(self.regularizer)
@@ -63,8 +65,8 @@ class ML_ODE_Basemodel(tf.keras.Model):
 		return output #(N,n_vars)
 
 	def get_solution(self, inputs):
-		"Inputs are (N,7)"
-		return inputs[:,1:self.n_params+1] + tf.transpose(tf.math.multiply( tf.transpose(self.call(inputs)), 1-tf.math.exp(-self.regularizer*inputs[:,0])) ) #(N,n_vars)
+		"Inputs are (N,n_vars)"
+		return inputs[:,1:self.n_vars+1] + tf.transpose(tf.math.multiply( tf.transpose(self.call(inputs)), 1-tf.math.exp(-self.regularizer*inputs[:,0])) ) #(N,n_vars)
 
 	def __ok_inputs(self, inputs):
 		if not isinstance(inputs, tf.Tensor):
@@ -74,14 +76,18 @@ class ML_ODE_Basemodel(tf.keras.Model):
 		return inputs
 
 	def ODE_derivative_np(self,t, X, Omega):
-		return self.ODE_derivative(tf.convert_to_tensor(t,dtype = tf.float32), tf.convert_to_tensor(X,dtype = tf.float32), tf.convert_to_tensor(Omega,dtype = tf.float32)).numpy()
+		if X.ndim == 1:
+			X = X[None,:]
+			Omega = Omega[None,:]
+		res = self.ODE_derivative(tf.convert_to_tensor(t,dtype = tf.float32), tf.convert_to_tensor(X,dtype = tf.float32), tf.convert_to_tensor(Omega,dtype = tf.float32)).numpy()
+		return res
 
 	def ODE_solution(self,t, X_0, Omega):
 		"Numpy interface for the solution of the ODE with ML. Accepts a list of times, the initial conditions (n_vars,) and Omega (n_params,)."
 		X_0 = np.array(X_0)
 		Omega = np.array(Omega)
-		assert Omega.shape == (self.n_vars,)
-		assert X_0.shape == (self.n_params,)
+		assert X_0.shape == (self.n_vars,)
+		assert Omega.shape == (self.n_params,)
 		X = np.repeat([[*X_0, *Omega]],len(t), axis = 0) #(T,3)
 		X = np.concatenate([np.array(t)[:, None],X], axis = 1) #(T,1+model.n_vars)
 		X = self.__ok_inputs(X) #casting to tf
@@ -100,10 +106,12 @@ class ML_ODE_Basemodel(tf.keras.Model):
 		
 		grad = g.batch_jacobian(out, X)[:,:,0] #d/dt #(N,3)
 		F = self.ODE_derivative(X[:,0], out, Omega)
+		if len(F.shape.as_list()) == 1:
+			F = tf.expand_dims(F, 1) #adding a extra dimension for the tensor
 
 			#loss can be multiplied by exp(-alpha*t) for "regularization"
-		loss = tf.math.square(grad - F) #(N,3)
-		loss = tf.transpose(tf.math.multiply(tf.transpose(loss), tf.math.exp(-1.*X[:,0]))) #(N,3)
+		loss = tf.math.square(grad - F) #(N,n_vars)
+		loss = tf.transpose(tf.math.multiply(tf.transpose(loss), tf.math.exp(-1.*X[:,0]))) #(N,n_vars)
 		loss = tf.reduce_sum(loss, axis = 1) /X.shape[1] #(N,)
 		return loss
 
@@ -126,7 +134,7 @@ class ML_ODE_Basemodel(tf.keras.Model):
 			tf.random.set_seed(np.random.randint(0,1000000))
 
 		random_Xs = []
-		for _range in self.ranges:
+		for _range in self.constraints:
 			random_Xs.append(tf.random.uniform((N_batch,1), minval=_range[0], maxval=_range[1], dtype=tf.dtypes.float32))
 
 		return tf.concat(random_Xs, axis = 1) #(N_batch, 7)
@@ -216,7 +224,7 @@ def plot_solution(model, N_sol, X_0,  seed, folder = ".", show = False):
 			true, = plt.plot(times,X_t[i,:,1+var],  c = 'r')
 			NN, = plt.plot(times,X_t_rec[i,:,1+var], c = 'b')
 		plt.xlabel(r"$t$")
-		plt.ylabel(r"$L_x$")
+		plt.ylabel(r"$x_"+str(var)+"$")
 		plt.legend([true, (true, NN)], ["True", "NN"])
 
 
