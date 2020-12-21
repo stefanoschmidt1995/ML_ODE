@@ -2,7 +2,7 @@
 
 ``ML_ODE`` provide the code to build a Machine Learning model for solving a Ordinary differential equation (ODE).
 
-##How it works
+## How it works
 
 All the interesting code is wrapped in a single class, which resembles a Keras model. It support methods fit and call and it is a compact way of encoding a model.
 You can inherit the provided baseclass and build their own model easily.
@@ -33,7 +33,7 @@ class ML_ODE(ML_ODE.ML_ODE_Basemodel):
 
 You can find more examples in basic\_example.py cosmological\_model.py.
 
-##Installing
+## Installing
 
 It's super simple:
 
@@ -41,7 +41,7 @@ It's super simple:
 
 and you're done! You can import ML_ODE from every python script you like: that's all. 
 
-##Documentation
+## Documentation
 
 Every function is documented (I did my best to make it a clear documentation).
 Once you have instantiated a model, you can use the python help functions
