@@ -36,7 +36,9 @@ You can find more examples in basic\_example.py cosmological\_model.py.
 ## Installing
 
 It's super simple: you only need the file ML_ODE.py, which keeps all the code you need. Get it with:
+
 ``wget https://raw.githubusercontent.com/stefanoschmidt1995/ML_ODE/main/ML_ODE.py``
+
 and you're done! You can import ML_ODE from every python script you like: that's all. 
 
 If you need also the examples, you can clone the whole repository
