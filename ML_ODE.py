@@ -143,8 +143,12 @@ class ML_ODE_Basemodel
 		if x.ndim == 1:
 			x = x[None,:]
 			Omega = Omega[None,:]
+			to_reshape = True
 		res = self.ODE_derivative(tf.convert_to_tensor(t,dtype = tf.float32), tf.convert_to_tensor(x,dtype = tf.float32), tf.convert_to_tensor(Omega,dtype = tf.float32)).numpy()
-		return res
+		if to_reshape:
+			return res[0,:]
+		else:
+			return res
 
 	def ODE_solution(self,t, X_0, Omega):
 		"""
@@ -163,7 +167,7 @@ class ML_ODE_Basemodel
 		X = np.repeat([[*X_0, *Omega]],len(t), axis = 0) #(T,3)
 		X = np.concatenate([np.array(t)[:, None],X], axis = 1) #(T,1+model.n_vars)
 		X = self.__ok_inputs(X) #casting to tf
-		res = self.get_solution(X) #(T,3)
+		res = self.get_solution(X) #(T,n_vars)
 		return res.numpy()
 	
 	def loss(self, X):
@@ -267,14 +271,12 @@ class ML_ODE_Basemodel
 					metric = 0.
 					N_avg = 100 #batch size to compute the metric at
 					X = self.get_random_X(N_avg)
-					times = np.linspace(0.,10.,100)
+					times = np.linspace(*self.constraints[0],100)
 					for j in range(N_avg):
 							#solving ODE for solution
 						X_t = scipy.integrate.odeint(self.ODE_derivative_np, X[j,1:self.n_vars+1].numpy(), times, args = (X[j,self.n_vars+1:],), tfirst = True)
 
 						X_t_NN = self.ODE_solution(times, X[j, 1:self.n_vars+1], X[j, self.n_vars+1:]) #(D,)
-						plt.plot(times, X_t_NN)
-
 						metric += np.mean(np.square(X_t -X_t_NN))
 
 					self.metric.append((self.epoch, metric/N_avg))
@@ -332,20 +334,20 @@ def plot_solution(model, N_sol, X_0,  seed, folder = ".", show = False):
 	X[:,1:1+model.n_vars] = X_0
 
 	times = np.linspace(*model.constraints[0],200)
-	X_t = np.zeros((N_sol, times.shape[0],3))
-	X_t_rec = np.zeros((N_sol, times.shape[0],3))
+	X_t = np.zeros((N_sol, times.shape[0],model.n_vars))
+	X_t_rec = np.zeros((N_sol, times.shape[0],model.n_vars))
 
 
 	for i in range(N_sol):
-		X_t_rec[i,:,:] = model.ODE_solution(times, X[i,1:1+model.n_vars], X[i,1+model.n_vars:])
+		X_t_rec[i,:,:] = model.ODE_solution(times, X[i,1:1+model.n_vars], X[i,1+model.n_vars:]) #(N,2)
 		X_t[i,:,:] = scipy.integrate.odeint(model.ODE_derivative_np, np.array(X[i,1:1+model.n_vars]), times, args = (np.array(X[i,1+model.n_vars:]),), tfirst = True)
 
 	for var in range(model.n_vars):
 
 		plt.figure()
 		for i in range(N_sol):
-			true, = plt.plot(times,X_t[i,:,1+var],  c = 'r')
-			NN, = plt.plot(times,X_t_rec[i,:,1+var], c = 'b')
+			true, = plt.plot(times,X_t[i,:,var],  c = 'r')
+			NN, = plt.plot(times,X_t_rec[i,:,var], c = 'b')
 		plt.xlabel(r"$t$")
 		plt.ylabel(r"$x_"+str(var)+"$")
 		plt.legend([true, (true, NN)], ["True", "NN"])

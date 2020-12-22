@@ -70,10 +70,14 @@ If you need also the examples, you might want to clone the whole repository
 ## Documentation
 
 Every function is documented (I did my best to make it clear).
-Once you have instantiated a model, you can use the python help function for understanding the behaviour of a method
+Once you have instantiated a model, you can use the python help function for understanding the behaviour of a the `ML_ODE` class or od a specific method:
 
-``help(ML_ODE.method_you_want_to_know_more_about)``
+```
+help(ML_ODE)
+help(ML_ODE.method_you_want_to_know_more_about)
+
+```
 
 Furthermore, you can have a look at the examples I provided.
 
-For more information, you can contact me at [stefanoschmidt1995@gmail.com](mailto:stefanoschmidt1995@gmail.com)
+If still something is not clear, or you wish to have more information, you can contact me at [stefanoschmidt1995@gmail.com](mailto:stefanoschmidt1995@gmail.com)
