@@ -146,7 +146,7 @@ class ML_ODE_Basemodel
 			to_reshape = True
 		res = self.ODE_derivative(tf.convert_to_tensor(t,dtype = tf.float32), tf.convert_to_tensor(x,dtype = tf.float32), tf.convert_to_tensor(Omega,dtype = tf.float32)).numpy()
 		if to_reshape:
-			return res[0,:]
+			return np.squeeze(res)
 		else:
 			return res
 

@@ -24,11 +24,28 @@ class Cosmological_model(ML_ODE_Basemodel):
 		self._l_list.append(tf.keras.layers.Dense(self.n_vars, activation=tf.keras.activations.linear))
 	
 	def ODE_derivative(self, z, D, Omega): #actually z, D_L, Omegas (N,2)
-		"Output shape should be (None,n_vars) or (None,)"
+		"""
+		Derivative of the dimensionless line-of-sight comoving distance dD/dz = 1/sqrt(E(z))
+		Omega[i,:] = Omega_M, Omega_Lambda
+		"""
 		x = 1+z
 		E_z = tf.math.multiply(tf.math.pow(x, 3), Omega[:,0])
 		E_z = E_z + tf.math.multiply(tf.math.pow(x, 2), 1-Omega[:,0]-Omega[:,1]) + Omega[:,1]  #(N,)
-		return tf.math.sqrt(E_z)
+		return tf.math.reciprocal(tf.math.sqrt(E_z))
+
+	def luminosity_distance(self,t, X_0, Omega, h = 0.7):
+		"""
+		Computes the luminosity distance (in Mpc), given redshift and the Omegas. (Wrapper to ODE_solution, specific to the cosmological model)
+		See eq. 16 and 21 in https://arxiv.org/abs/astro-ph/9905116
+		"""
+		const = 3000./h #c /H_0 (in Mpc)
+		Omega_k = 1. - Omega[0] - Omega[1]
+		D_c = self.ODE_solution(t, X_0, Omega) #(1,)
+		if Omega_k > 1e-7:
+			D_c = np.sinh(np.sqrt(Omega_k)*D_c)/np.sqrt(Omega_k)
+		if Omega_k < 1e-7:
+			D_c = np.sin(np.sqrt(np.abs(Omega_k))*D_c)/np.sqrt(np.abs(Omega_k))
+		return const * D_c
 
 
 def plot(model, savefile, show = False):

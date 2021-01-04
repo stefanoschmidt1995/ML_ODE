@@ -49,7 +49,7 @@ def plot(model, savefile, show = False):
 
 
 #Building and fitting the model
-what_to_do = "fit"
+what_to_do = "load"
 
 model_name = "example_model"
 model = Basic_example(model_name)
