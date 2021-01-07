@@ -7,7 +7,7 @@ An ODE problem consist in finding a function of time `t` ``f(t;x_0, Omega)``, de
 f'(t) = F(t,x,Omega)
 f(t=0) = x_0
 ```
-in this contex `x_0` is the value of the function at some initial time and `Omega` is a set of parameters useful to specify the time derivative of the problem.
+in this contex `x_0` is the value of the function at some initial time and `Omega` is a set of additional parameters useful to specify the time derivative of the problem.
 
 As it is well known, a neural network can approximate (at least in principle) any real function, so: why not approximating the ODE solution with a Neural Network? In doing so we follow the seminal work [Artificial Neural Networks for Solving Ordinary and Partial Differential Equations](https://arxiv.org/abs/physics/9705023). The idea is further developed in a more modern [paper](https://arxiv.org/abs/2006.14372) and this is where we take inspiration from.
 Basically, we use the following ansatz for the solution:
@@ -16,7 +16,13 @@ Basically, we use the following ansatz for the solution:
 f(t;x_0, Omega) = x_0 + (1-exp(-t))*NN(t, x_0, Omega)
 ```
 
-This ansatz is pretty smart: it satisfies identically the boundary conditions and you can easily check how far is from the actual soluttion by comparing its time derivative with the function `F(t,Omega)` of the problem. This idea is implemented in the loss function. Once you have a loss function, it's all done: Tensorflow takes care of minimizing your loss function with respect to the weights of the NN.
+This ansatz is pretty smart: it satisfies identically the boundary conditions and you can easily check how far `f` is from the actual solution by comparing its time derivative with the function `F(t,Omega)` of the problem. This idea is implemented in the loss function, which takes the following form:
+
+```
+L(t,x_0,Omega) = | f'(t;x_0, Omega) - F(t, f(t,_x0, Omega), Omega) |**2 * exp(-lambda*t)
+```
+Where `lambda` is a regularization constant to ensure that the training is more gradual.
+Once you have a loss function, it's all done: Tensorflow takes care of minimizing your loss function with respect to the weights of the NN.
 
 ## How it works
 
@@ -32,27 +38,37 @@ That's all. Not simple enough? Below you will find a simple example:
 ```Python
 import ML_ODE
 class ML_ODE(ML_ODE.ML_ODE_Basemodel):
-	"Class for actually solving a ODE problem"
+	"Class for solving a ODE problem. Inherit from ML_ODE.ML_ODE_Basemodel and implements some methods."
 
 	def set_model_properties(self):
-		"This class should initialise some important values"
-		self.n_vars = 1 #number of variables of the ODE
-		self.n_params = 1 #number of parameters of the ODE
-			#constraints for the time integration and for each variable/parameter
-			#order (t_range, x0_range, Omega1_range)
-		self.constraints = [(0.,20.),(.0, 1.), (0.,1.)] 
-		self.regularizer = 1. #regularizer for the loss function L'(t) = L(t) *exp(regularizer*t)
+		"This class should initialise some important paramters for the network"
+		self.n_vars = 2	#number of variables in the problem
+		self.n_params = 2 #number of parameters in the problem
+		self.constraints = [(0.,1.),(-1., 1.), (-1., 1.), (-1., 1.),(-1., 1.)] #(t_range, x0_range, x1_range, *params_range)
+		self.regularizer = 1. #regularizer for the loss function (not compulsory, default 0)
+			#The regularizer act on the loss function L(t,x,Omega) s.t. L' = L * exp(regularizer*t): this is to ensure that earlier times are fitted with more accuracy
 
 	def build_NN(self):
 		"This class builds the fully connected NN architechture. Layer sequence should be provided by a list of layers (in self._l_list)"
-		self._l_list.append(tf.keras.layers.Dense(128/2, activation=tf.nn.sigmoid) )
+		self._l_list.append(tf.keras.layers.Dense(128*2, activation=tf.nn.sigmoid) )
+		self._l_list.append(tf.keras.layers.Dense(128, activation=tf.nn.sigmoid) )
 		self._l_list.append(tf.keras.layers.Dense(self.n_vars, activation=tf.keras.activations.linear))
 	
-	def ODE_derivative(self, z, D, Omega): #actually z, D_L, Omegas (N,2)
-		"Class (in tensorflow) with the derivative of the function F(x,t). Output shape should be (None,n_vars) or (None,)"
+	
+	def ODE_derivative(self, t, X, Omega): #actually z, D_L, Omegas (N,2)
+		"""Here we write down the derivative of x: x' = F(t,x,Omega).
+		Function should be written in pure tensorflow (input and outputs are tf tensors).
+		Inputs:
+			t (None,)					times
+			X (None, n_vars)			values of the variables
+			Omega (None, n_params)		parameters
+		Output:
+			x_prime (None,n_vars)/(None,)	derivative of the function
+		"""
+		return tf.math.multiply(X,Omega) #simple example where F_i(t,x,Omega) = x_i*Omega_i
 ```
 
-You can find more examples in basic\_example.py and cosmological\_model.py.
+You can find working examples in `examples/example_model.py` and `examples/cosmological_model.py`: the trained models are in folder `examples/example_model` and `examples/cosmological_model`.
 
 ## Installing
 

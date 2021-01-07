@@ -1,5 +1,9 @@
 """
 Basic class for fitting a Neural Network which solves a ODE.
+Interesting tutorials for tensorflow can be found here:
+	For how to build a model: https://keras.io/api/models/model/
+	For how to fit a model in a custom way: https://keras.io/api/optimizers/
+	For computing gradients w.r.t. inputs: https://stackoverflow.com/questions/53649837/how-to-compute-loss-gradient-w-r-t-to-model-inputs-in-a-keras-model
 """
 
 try:
@@ -327,7 +331,7 @@ def plot_solution(model, N_sol, X_0,  seed, folder = ".", show = False):
 		N_sol		number of test solution to plot
 		X_0			initial condition for all the test evaluations
 		seed		random seed
-		folder		folder at which the output is saved
+		folder		folder at which the output is saved (if None, nothing is saved)
 		show		whether to show the saved plots
 	"""
 	X = model.get_random_X(N_sol, seed).numpy()
@@ -352,8 +356,8 @@ def plot_solution(model, N_sol, X_0,  seed, folder = ".", show = False):
 		plt.ylabel(r"$x_"+str(var)+"$")
 		plt.legend([true, (true, NN)], ["True", "NN"])
 
-
-		plt.savefig(folder+"/var{}.pdf".format(var), transparent =True)
+		if folder is not None:
+			plt.savefig(folder+"/var{}.pdf".format(var), transparent =True)
 
 
 	if show:
