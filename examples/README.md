@@ -10,7 +10,7 @@ First variable             |  Second variable
 :-------------------------:|:-------------------------:
 ![](https://github.com/stefanoschmidt1995/ML_ODE/raw/main/examples/images/var0_example.png)| ![](https://github.com/stefanoschmidt1995/ML_ODE/raw/main/examples/images/var1_example.png)
 
-T`cosmological_model.py` is useful in cosmology: it learns the relation between luminosity distance and redshift as a function of the content of the Universe (parametrized by Omega). More precisely, it learns the relation between redshift and dimensionless line-of-sight comoving distance (see [here](https://arxiv.org/abs/astro-ph/9905116) for more details of the conventions used).
+`cosmological_model.py` is useful in cosmology: it learns the relation between luminosity distance and redshift as a function of the content of the Universe (parametrized by Omega). More precisely, it learns the relation between redshift and dimensionless line-of-sight comoving distance (see [here](https://arxiv.org/abs/astro-ph/9905116) for more details of the conventions used).
 The model works quite well up to redshift `z = 20`
 
 <center>
