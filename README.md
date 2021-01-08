@@ -88,7 +88,7 @@ If you need also the examples, you might want to clone the whole repository
 ## Documentation
 
 Every function is documented (I did my best to make it clear).
-Once you have instantiated a model, you can use the python help function for understanding the behaviour of a the `ML_ODE` class or od a specific method:
+Once you have instantiated a model, you can use the python help function for understanding the behaviour of the `ML_ODE` class or of a specific method:
 
 ```
 help(ML_ODE)
