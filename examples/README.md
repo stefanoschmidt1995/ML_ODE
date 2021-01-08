@@ -7,7 +7,7 @@ The subfolders keep track of the model during the training: each of them, labele
 
 Enjoy! :)
 
-## `example_model.py`
+### `example_model.py`
 `example_model.py` is a dummy (but non-trivial) example of solving an equation.
 It solves the equation (2 dimensions): `x' = A x`, where A is an arbitrary 2x2 matrix.
 Here are the results:
@@ -18,7 +18,7 @@ First variable             |  Second variable
 
 As you see the blue lines almost perfectly overlaps the red line: the network is well able to reproduce the solution to the ODE obtaine with standard Runge-Kutta integration.
 
-## `cosmological_model.py`
+### `cosmological_model.py`
 `cosmological_model.py` is a useful cosmology example: it learns the relation between luminosity distance and redshift as a function of the content of the Universe (parametrized by Omega). More precisely, it learns the relation between redshift and dimensionless line-of-sight comoving distance (see [here](https://arxiv.org/abs/astro-ph/9905116) for more details of the conventions used).
 The class implements also a function `luminosity_distance()` to compute the actual luminosity distance (eq. (16) and (21) of the paper above); of course, this function is just a helper and it is not required to fit the NN or to build the model.
 The model works quite well up to redshift `z = 20`
