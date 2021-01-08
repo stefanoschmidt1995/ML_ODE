@@ -27,7 +27,7 @@ The model works quite well up to redshift `z = 20`
 <img src="https://github.com/stefanoschmidt1995/ML_ODE/raw/main/examples/images/var0_cosmo.png" height="500">
 </center>
 
-Again, you see the the match between red and blue is satisfying.
+Again, you see the the match between red and blue is satisfying. Some little problems are seen at very high redshifts: but who cares? A galaxy with `z=20` is so far away...
 
 If you are curious, below you can see the progress in the training: the loss function (blue) and the metric (red, the average mse between the true and the reconstructed solution) are reported as a function of the epoch number
 
