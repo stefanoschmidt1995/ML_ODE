@@ -7,7 +7,7 @@ An ODE problem consist in finding a function of time `t` ``f(t;x_0, Omega)``, de
 f'(t) = F(t,x,Omega)
 f(t=0) = x_0
 ```
-in this contex `x_0` is the value of the function at some initial time and `Omega` is a set of additional parameters useful to specify the time derivative of the problem.
+in this context `x_0` is the value of the function at some initial time and `Omega` is a set of additional parameters useful to specify the time derivative of the problem.
 
 As it is well known, a neural network can approximate (at least in principle) any real function, so: why not approximating the ODE solution with a Neural Network? In doing so we follow the seminal work [Artificial Neural Networks for Solving Ordinary and Partial Differential Equations](https://arxiv.org/abs/physics/9705023). The idea is further developed in a more modern [paper](https://arxiv.org/abs/2006.14372) and this is where we take inspiration from.
 Basically, we use the following ansatz for the solution:
@@ -23,6 +23,8 @@ L(t,x_0,Omega) = | f'(t;x_0, Omega) - F(t, f(t,_x0, Omega), Omega) |**2 * exp(-l
 ```
 Where `lambda` is a regularization constant to ensure that the training is more gradual.
 Once you have a loss function, it's all done: Tensorflow takes care of minimizing your loss function with respect to the weights of the NN.
+
+You may wonder why we need a NN to solve an ODE, when we already have plenty of finite difference methods that works pretty well. The answer is simple: *a NN is fast*! This of course saves you a lot of computational resourches and at the same time you get the same degree of accuracy. Not convinced yet? A NN also provides a closed form expression for the solution, and once you have such expression you can differentiate it as many times as yu wish: nice, isn't?
 
 ## How it works
 
