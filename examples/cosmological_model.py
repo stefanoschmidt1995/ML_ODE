@@ -83,9 +83,10 @@ plt.plot(history[:,0], history[:,1], c = 'b')
 plt.plot(metric[:,0], metric[:,1], c = 'r')
 plt.ylabel('loss/metric')
 plt.yscale('log')
-#plt.savefig(model_name+"/loss.pdf", transparent =True)
+plt.savefig("images/loss_cosmo.png", transparent =False)
 
 plot(model, None, True)
+
 
 
 
