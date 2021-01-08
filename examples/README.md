@@ -32,7 +32,7 @@ Again, you see the the match between red and blue is satisfying.
 If you are curious, below you can see the progress in the training: the loss function (blue) and the metric (red, the average mse between the true and the reconstructed solution) are reported as a function of the epoch number
 
 <center>
-<img src="https://github.com/stefanoschmidt1995/ML_ODE/raw/main/examples/images/var0_cosmo.png" height="500">
+<img src="https://github.com/stefanoschmidt1995/ML_ODE/raw/main/examples/images/loss_cosmo.png" height="500">
 </center>
 
 
