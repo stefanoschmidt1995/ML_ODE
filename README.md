@@ -39,7 +39,7 @@ That's all. Not simple enough? Below you will find a simple example:
 
 ```Python
 import ML_ODE
-class ML_ODE(ML_ODE.ML_ODE_Basemodel):
+class my_ML_ODE(ML_ODE.ML_ODE_Basemodel):
 	"Class for solving a ODE problem. Inherit from ML_ODE.ML_ODE_Basemodel and implements some methods."
 
 	def set_model_properties(self):
