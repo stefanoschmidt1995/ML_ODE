@@ -2,8 +2,6 @@
 This script uses the class ML_ODE for computing the relation between luminosity distance and redshift, as a function of the cosmological parameters.
 """
 
-#running on stefano.schmidt@ldas-pcdev13.ligo.caltech.edu
-
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
