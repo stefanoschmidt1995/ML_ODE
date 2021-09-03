@@ -219,7 +219,8 @@ class ML_ODE_Basemodel
 
 	def get_random_X(self, N_batch, seed = None):
 		"""
-		Computes N_batch random values for the input X (1+n_vars+n_params) of the NN.
+		Computes N_batch random values for the input X (1+n_vars+n_params) of the NN. The input X of the network corresponds to the *initial condition* of the ODE problem.
+		The function can be overloaded in the child class, to make more complicated random extractions. Any overloading must keep the same calling signature.
 		Input:
 			N_batch		number of batch to be extracted
 			seed		random seed
@@ -273,7 +274,7 @@ class ML_ODE_Basemodel
 			if save_output:
 				if i%save_step ==0: #computing metric loss
 					metric = 0.
-					N_avg = 100 #batch size to compute the metric at
+					N_avg = 200 #batch size to compute the metric at
 					X = self.get_random_X(N_avg)
 					times = np.linspace(*self.constraints[0],100)
 					for j in range(N_avg):
@@ -320,7 +321,7 @@ class ML_ODE_Basemodel
 
 def plot_solution(model, N_sol, X_0,  seed, folder = ".", show = False):
 	"""
-	Base mode for a function for plotting a comparison between the NN results and the actual solution.
+	Base model for a function for plotting a comparison between the NN results and the actual solution.
 	User can use this function to build function plot to input ML_ODE.fit()
 
 	def plot(model, savefile):
@@ -366,6 +367,54 @@ def plot_solution(model, N_sol, X_0,  seed, folder = ".", show = False):
 		plt.close('all')
 
 	return
+
+def solve_ode_numerically(model, X_0, Omega, N_points = 200, show = True):
+	"""
+	Convenient function to solve the ODE numerically. (useful for sanity checks!)
+
+	Input:
+		model		an instance of ML_ODE 
+		X_0			initial condition for all the test evaluations
+		Omega		parameters for the ODE
+		N_points	Number of points for the time grid
+		show		whether to show the plots
+	Output:
+		times		Time grid at which the solution is evaluated
+		ODE_sol		Solution of the ODE
+	"""
+	times = np.linspace(*model.constraints[0],N_points)
+	
+	ODE_sol = scipy.integrate.odeint(model.ODE_derivative_np, np.array(X_0), times, args = (np.array(Omega),), tfirst = True)
+	
+	for var in range(model.n_vars):
+		plt.figure()
+		plt.title("ODE solution\nInitial condition: {}\nParams: {}".format(X_0, Omega))
+		true, = plt.plot(times, ODE_sol[:,var],  c = 'r')
+		plt.xlabel(r"$t$")
+		plt.ylabel(r"$x_"+str(var)+"$")
+
+	if show: plt.show()
+	else: plt.close('all')
+	return times, ODE_sol
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
