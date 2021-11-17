@@ -16,6 +16,29 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.integrate
 
+#############DEBUG LINE PROFILING
+try:
+    from line_profiler import LineProfiler
+
+    def do_profile(follow=[]):
+        def inner(func):
+            def profiled_func(*args, **kwargs):
+                try:
+                    profiler = LineProfiler()
+                    profiler.add_function(func)
+                    for f in follow:
+                        profiler.add_function(f)
+                    profiler.enable_by_count()
+                    return func(*args, **kwargs)
+                finally:
+                    profiler.print_stats()
+            return profiled_func
+        return inner
+except:
+    pass
+
+#############
+
 #defining a Model
 class ML_ODE_Basemodel(tf.keras.Model):
 	"""
@@ -148,7 +171,9 @@ class ML_ODE_Basemodel
 			x = x[None,:]
 			Omega = Omega[None,:]
 			to_reshape = True
-		res = self.ODE_derivative(tf.convert_to_tensor(t,dtype = tf.float32), tf.convert_to_tensor(x,dtype = tf.float32), tf.convert_to_tensor(Omega,dtype = tf.float32)).numpy()
+		res = self.ODE_derivative(tf.convert_to_tensor(t,dtype = tf.float32), tf.convert_to_tensor(x,dtype = tf.float32), tf.convert_to_tensor(Omega,dtype = tf.float32))#.numpy()
+		res = np.array(res) #it doesn't look like a dramatic speed up
+		
 		if to_reshape:
 			return np.squeeze(res)
 		else:
@@ -174,6 +199,7 @@ class ML_ODE_Basemodel
 		res = self.get_solution(X) #(T,n_vars)
 		return res.numpy()
 	
+	#@do_profile(follow=[])
 	def loss(self, X):
 		"""
 		Loss function as a function of time, initial conditions and parameters. Input/outputs are tensorflow only.
@@ -183,14 +209,30 @@ class ML_ODE_Basemodel
 			loss (None,)		values for the loss function
 		"""
 		Omega = X[:,self.n_vars+1:]
-		with tf.GradientTape() as g:
-			g.watch(X)
-			out = self.get_solution(X)
+
+		if False:	
+				#this is more involved but should be faster. Even if it's not	
+			t, X_ = X[:,0, None], X[:,1:]
+			with tf.GradientTape(persistent = False) as g:
+				g.watch(t)
+				y = tf.concat([t,X_], axis =1)
+				out = self.get_solution(y)
+			grad = g.batch_jacobian(out, t)[:,:,0] #d/dt #(N,n_vars)
+		else:
+			with tf.GradientTape(persistent = False) as g:
+				g.watch(X)
+				out = self.get_solution(X)
+			
+			grad = g.batch_jacobian(out, X)[:,:,0] #d/dt #(N,n_vars)
 		
-		grad = g.batch_jacobian(out, X)[:,:,0] #d/dt #(N,3)
 		F = self.ODE_derivative(X[:,0], out, Omega)
 		if len(F.shape.as_list()) == 1:
 			F = tf.expand_dims(F, 1) #adding a extra dimension for the tensor
+
+		#if tf.math.reduce_all(tf.math.is_nan(grad, name=None)).numpy():
+		#	print("nan in grad")
+		#if tf.math.reduce_all(tf.math.is_nan(F, name=None)).numpy():
+		#	print("nan in ODE_derivative")
 
 			#loss can be multiplied by exp(-alpha*t) for "regularization"
 		loss = tf.math.square(grad - F) #(N,n_vars)
@@ -256,7 +298,7 @@ class ML_ODE_Basemodel
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate = learning_rate) #default optimizer
 		epoch_0 = self.epoch
 		for i in range(N_epochs):
-			X = self.get_random_X(N_batch)
+			X = self.get_random_X(N_batch) #(N,D)
 
 			loss = self.grad_update(X)
 
@@ -276,10 +318,10 @@ class ML_ODE_Basemodel
 					metric = 0.
 					N_avg = 200 #batch size to compute the metric at
 					X = self.get_random_X(N_avg)
-					times = np.linspace(*self.constraints[0],100)
+					times = np.linspace(*self.constraints[0],200)
 					for j in range(N_avg):
 							#solving ODE for solution
-						X_t = scipy.integrate.odeint(self.ODE_derivative_np, X[j,1:self.n_vars+1].numpy(), times, args = (X[j,self.n_vars+1:],), tfirst = True)
+						X_t = scipy.integrate.odeint(self.ODE_derivative_np, X[j,1:self.n_vars+1].numpy(), times, args = (X[j,self.n_vars+1:].numpy(),), tfirst = True)
 
 						X_t_NN = self.ODE_solution(times, X[j, 1:self.n_vars+1], X[j, self.n_vars+1:]) #(D,)
 						metric += np.mean(np.square(X_t -X_t_NN))
